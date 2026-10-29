@@ -292,3 +292,41 @@ def weight_decay_sweep(X_train, y_train, X_test, y_test, lams):
     # Return NumPy arrays in the same order as the supplied penalties.
     return np.asarray(train_err, dtype=float), np.asarray(test_err, dtype=float)
 
+# Step 13 - softmax_loglik_grad
+def softmax_loglik_grad(W, X, y, C):
+    # Compute logits for the C - 1 free classes.
+    # W has shape (C - 1, D), so logits_free has shape (N, C - 1).
+    logits_free = X @ W.T
+
+    # The last class is the reference class, with its logits fixed at zero.
+    reference_logits = np.zeros((X.shape[0], 1), dtype=float)
+    logits = np.concatenate((logits_free, reference_logits), axis=1)
+
+    # Compute a numerically stable log-sum-exp by shifting each row
+    # by its maximum logit.
+    max_logits = np.max(logits, axis=1, keepdims=True)
+    shifted_logits = logits - max_logits
+    exp_logits = np.exp(shifted_logits)
+
+    log_sum_exp = (
+        max_logits[:, 0]
+        + np.log(np.sum(exp_logits, axis=1))
+    )
+
+    # Compute the summed multinomial log-likelihood.
+    # The selected class logit is gathered for each observation.
+    n = np.arange(X.shape[0])
+    ll = np.sum(logits[n, y] - log_sum_exp)
+
+    # Compute the softmax probabilities for all C classes.
+    mu = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+
+    # Construct one-hot labels for the C - 1 free classes.
+    Y_free = (y[:, None] == np.arange(C - 1)[None, :]).astype(float)
+
+    # Compute the gradient of the log-likelihood with respect to
+    # the free-class weights. Its shape is (C - 1, D).
+    G = (Y_free - mu[:, :C - 1]).T @ X
+
+    return float(ll), G
+
