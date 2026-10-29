@@ -379,3 +379,20 @@ def fit_softmax_mm(X, y, C, n_iter):
 
     return W, np.asarray(history, dtype=float)
 
+# Step 16 - make_separable_data
+def make_separable_data(n, margin, rng):
+    # Fixed unit direction for the separating line.
+    u = np.array([2.0, 1.0]) / np.sqrt(5.0)
+
+    # Draw all feature vectors in exactly one random-number generator call.
+    X = rng.normal(0.0, 2.0, size=(n, 2))
+
+    # Assign class 1 when the projection onto u is positive; otherwise class 0.
+    y = (X @ u > 0.0).astype(int)
+
+    # Push each point away from the separating line by the specified margin.
+    # Class 1 moves along +u, while class 0 moves along -u.
+    X = X + margin * np.outer(2 * y - 1, u)
+
+    return X, y
+
