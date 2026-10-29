@@ -42,3 +42,15 @@ def logreg_nll(w, X, y):
     # Return the average negative log-likelihood as a Python float.
     return float(np.mean(nll))
 
+# Step 3 - logreg_grad
+def logreg_grad(w, X, y):
+    # Get the number of training examples.
+    N = X.shape[0]
+    # Compute predicted probabilities using sigmoid from Step 1.
+    mu = sigmoid(X @ w)
+    # Compute the gradient of the average negative log-likelihood.
+    # The gradient is X.T @ (mu - y) / N.
+    grad = X.T @ (mu - y) / N
+    # Return the gradient vector of shape (D,).
+    return grad
+
