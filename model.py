@@ -130,3 +130,32 @@ def load_iris_sepal():
 
     return X, y
 
+# Step 7 - sgd_logreg
+def sgd_logreg(X, y, lr, n_epochs, rng):
+    # Get the number of training examples and features.
+    N, D = X.shape
+
+    # Initialize the weights to zero.
+    w = np.zeros(D, dtype=float)
+
+    # Store the average negative log-likelihood after each epoch.
+    history = []
+
+    for epoch in range(n_epochs):
+        # Generate the visiting order with exactly one permutation per epoch.
+        order = rng.permutation(N)
+
+        # Perform single-example stochastic gradient descent.
+        for n in order:
+            # Compute the predicted probability for the current example.
+            mu_n = sigmoid(X[n] @ w)
+
+            # Update the weights using the gradient of this example's loss.
+            w -= lr * (mu_n - y[n]) * X[n]
+
+        # Record the average NLL after completing this epoch.
+        history.append(logreg_nll(w, X, y))
+
+    # Return the final weights and the loss history as a NumPy array.
+    return w, np.asarray(history, dtype=float)
+
