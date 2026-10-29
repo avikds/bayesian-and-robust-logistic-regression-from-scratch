@@ -78,3 +78,23 @@ def logreg_hessian(w, X):
 
     return hessian
 
+# Step 5 - numerical_gradient
+def numerical_gradient(f, w, eps=1e-5):
+    # Create a floating-point copy so the original w is never modified.
+    w = np.asarray(w, dtype=float)
+    grad = np.zeros_like(w, dtype=float)
+
+    # Compute the gradient one coordinate at a time using central differences.
+    for d in range(w.size):
+        # Create independent perturbed copies of w.
+        w_plus = w.copy()
+        w_minus = w.copy()
+
+        w_plus[d] += eps
+        w_minus[d] -= eps
+
+        # Estimate the partial derivative with respect to coordinate d.
+        grad[d] = (f(w_plus) - f(w_minus)) / (2.0 * eps)
+
+    return grad
+
