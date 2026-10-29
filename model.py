@@ -271,3 +271,24 @@ def polynomial_features(X, degree):
     # Stack the monomial columns into an (N, M) array.
     return np.column_stack(features)
 
+# Step 12 - weight_decay_sweep
+def weight_decay_sweep(X_train, y_train, X_test, y_test, lams):
+    # Store the training and test misclassification rates for each penalty.
+    train_err = []
+    test_err = []
+
+    for lam in lams:
+        # Fit logistic regression using the specified L2 penalty.
+        w = fit_map_newton(X_train, y_train, lam)
+
+        # Predict class 1 when the linear score is strictly positive.
+        train_pred = (X_train @ w > 0).astype(int)
+        test_pred = (X_test @ w > 0).astype(int)
+
+        # Compute the misclassification rates.
+        train_err.append(np.mean(train_pred != y_train))
+        test_err.append(np.mean(test_pred != y_test))
+
+    # Return NumPy arrays in the same order as the supplied penalties.
+    return np.asarray(train_err, dtype=float), np.asarray(test_err, dtype=float)
+
