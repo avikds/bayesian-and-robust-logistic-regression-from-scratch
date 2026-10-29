@@ -396,3 +396,28 @@ def make_separable_data(n, margin, rng):
 
     return X, y
 
+# Step 17 - laplace_posterior
+def laplace_posterior(X, y, prior_var):
+    # Number of observations and features.
+    N, D = X.shape
+
+    # Convert the Gaussian-prior MAP objective to the averaged-NLL
+    # objective used by fit_map_newton:
+    # lambda = 1 / (2 * N * prior_var).
+    lam = 1.0 / (2.0 * N * prior_var)
+
+    # Compute the maximum a posteriori (MAP) estimate.
+    w_map = fit_map_newton(X, y, lam)
+
+    # Construct the posterior precision matrix, which is the Hessian
+    # of the summed negative log-posterior at the MAP estimate.
+    precision = (
+        N * logreg_hessian(w_map, X)
+        + np.eye(D) / prior_var
+    )
+
+    # The Laplace covariance is the inverse posterior precision.
+    Sigma = np.linalg.inv(precision)
+
+    return w_map, Sigma
+
