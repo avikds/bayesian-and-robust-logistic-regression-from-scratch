@@ -442,3 +442,18 @@ def predictive_mc(X_test, w_map, Sigma, n_samples, rng):
     # Average over posterior samples to obtain the predictive probabilities.
     return np.mean(probabilities, axis=1)
 
+# Step 19 - predictive_probit
+def predictive_probit(X_test, w_map, Sigma):
+    # Compute the mean logit for each test example.
+    m = X_test @ w_map
+
+    # Compute the posterior variance x^T Sigma x for every test example.
+    # This vectorized calculation avoids Python loops.
+    v = np.sum((X_test @ Sigma) * X_test, axis=1)
+
+    # Apply the probit approximation correction for posterior uncertainty.
+    kappa = 1.0 / np.sqrt(1.0 + np.pi * v / 8.0)
+
+    # Return the approximate posterior predictive probabilities.
+    return sigmoid(kappa * m)
+
