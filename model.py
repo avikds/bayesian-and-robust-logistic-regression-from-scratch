@@ -630,3 +630,53 @@ def clean_responsibility(w, pi, X, y):
 
     return r
 
+# Step 25 - fit_robust_logreg
+def fit_robust_logreg(X, y, lam, n_iter=100, pi0=0.1, n_newton=3):
+    # Initialize the weights and label-noise probability.
+    N, D = X.shape
+    w = np.zeros(D, dtype=float)
+    pi = float(pi0)
+
+    # Construct the penalty matrix, excluding the bias at index 0.
+    P = np.eye(D)
+    P[0, 0] = 0.0
+
+    history = []
+
+    for _ in range(n_iter):
+        # E-step: posterior probability that each observed label is clean.
+        r = clean_responsibility(w, pi, X, y)
+
+        # M-step for the noise probability.
+        pi = float(1.0 - np.mean(r))
+
+        # M-step for the weights: perform the requested Newton updates
+        # on the responsibility-weighted penalized negative log-likelihood.
+        for _ in range(n_newton):
+            # Recompute probabilities at the current weights before each step.
+            mu = sigmoid(X @ w)
+
+            # Gradient of the weighted average NLL plus L2 penalty.
+            g = (
+                X.T @ (r * (mu - y)) / N
+                + 2.0 * lam * (P @ w)
+            )
+
+            # Hessian of the weighted average NLL plus L2 penalty.
+            weights = r * mu * (1.0 - mu)
+            H = (
+                (X.T * weights) @ X / N
+                + 2.0 * lam * P
+            )
+
+            # Newton update.
+            step = np.linalg.solve(H, g)
+            w = w - step
+
+        # Record the penalized mixture NLL after each EM iteration.
+        penalty = lam * np.dot(w[1:], w[1:])
+        history.append(mixture_nll(w, pi, X, y) + penalty)
+
+    # Return final weights, noise probability, and history.
+    return w, pi, np.asarray(history, dtype=float)
+
