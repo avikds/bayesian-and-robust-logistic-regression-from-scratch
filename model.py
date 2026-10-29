@@ -159,3 +159,45 @@ def sgd_logreg(X, y, lr, n_epochs, rng):
     # Return the final weights and the loss history as a NumPy array.
     return w, np.asarray(history, dtype=float)
 
+# Step 8 - irls_logreg
+def irls_logreg(X, y, max_iter=50, tol=1e-10):
+    # Initialize the weight vector to zero.
+    w = np.zeros(X.shape[1], dtype=float)
+
+    # Record the initial negative log-likelihood before any updates.
+    history = [logreg_nll(w, X, y)]
+
+    for _ in range(max_iter):
+        # Compute logits, probabilities, and their associated weights.
+        a = X @ w
+        mu = sigmoid(a)
+        s = mu * (1.0 - mu)
+
+        # Avoid division by zero in extreme numerical cases.
+        s = np.maximum(s, np.finfo(float).tiny)
+
+        # Compute the working response for IRLS.
+        z = a + (y - mu) / s
+
+        # Construct the weighted least-squares system without forming
+        # the N x N diagonal matrix S.
+        XtS = X.T * s
+        lhs = XtS @ X
+        rhs = XtS @ z
+
+        # Solve the weighted least-squares system for the new weights.
+        w_new = np.linalg.solve(lhs, rhs)
+
+        # Record the NLL after the update.
+        history.append(logreg_nll(w_new, X, y))
+
+        # Check convergence before replacing the current weights.
+        converged = np.max(np.abs(w_new - w)) < tol
+        w = w_new
+
+        if converged:
+            break
+
+    # Return the final weights and the NLL history as a NumPy array.
+    return w, np.asarray(history, dtype=float)
+
