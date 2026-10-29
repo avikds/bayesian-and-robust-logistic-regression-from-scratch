@@ -252,3 +252,22 @@ def make_ring_data(n, flip_prob, rng):
 
     return X, y
 
+# Step 11 - polynomial_features
+def polynomial_features(X, degree):
+    # Extract the two input features.
+    x1 = X[:, 0]
+    x2 = X[:, 1]
+
+    # Store the generated monomial columns in the required order.
+    features = []
+
+    # Enumerate monomials by increasing total degree.
+    for d in range(degree + 1):
+        # Within each degree, use decreasing powers of x1.
+        for i in range(d, -1, -1):
+            # Append x1^i * x2^(d-i).
+            features.append((x1 ** i) * (x2 ** (d - i)))
+
+    # Stack the monomial columns into an (N, M) array.
+    return np.column_stack(features)
+
