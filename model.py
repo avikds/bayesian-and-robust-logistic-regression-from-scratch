@@ -457,3 +457,41 @@ def predictive_probit(X_test, w_map, Sigma):
     # Return the approximate posterior predictive probabilities.
     return sigmoid(kappa * m)
 
+# Step 20 - calibration_metrics
+def calibration_metrics(p, y, n_bins=10):
+    # Convert inputs to NumPy arrays and clip probabilities for numerical stability.
+    p = np.asarray(p, dtype=float)
+    y = np.asarray(y, dtype=float)
+    p = np.clip(p, 1e-12, 1.0 - 1e-12)
+
+    # Compute the mean binary cross-entropy (log loss).
+    nll = -np.mean(y * np.log(p) + (1.0 - y) * np.log(1.0 - p))
+
+    # Assign each prediction to an equal-width bin on [0, 1].
+    # The final bin includes probability 1.0.
+    bin_indices = np.minimum(
+        np.floor(p * n_bins).astype(int),
+        n_bins - 1
+    )
+
+    # Compute expected calibration error (ECE).
+    ece = 0.0
+    M = len(p)
+
+    for b in range(n_bins):
+        # Select predictions belonging to the current bin.
+        mask = bin_indices == b
+
+        # Empty bins contribute nothing to ECE.
+        if np.any(mask):
+            # Compare the observed positive frequency with the
+            # average predicted probability in this bin.
+            accuracy = np.mean(y[mask])
+            confidence = np.mean(p[mask])
+
+            # Weight the bin's calibration error by its fraction of samples.
+            ece += (np.sum(mask) / M) * abs(accuracy - confidence)
+
+    # Return both metrics as Python floats.
+    return float(nll), float(ece)
+
