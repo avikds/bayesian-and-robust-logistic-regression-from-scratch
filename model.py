@@ -201,3 +201,40 @@ def irls_logreg(X, y, max_iter=50, tol=1e-10):
     # Return the final weights and the NLL history as a NumPy array.
     return w, np.asarray(history, dtype=float)
 
+# Step 9 - fit_map_newton
+def fit_map_newton(X, y, lam, max_iter=100, tol=1e-10):
+    # Initialize the weights to zero.
+    D = X.shape[1]
+    w = np.zeros(D, dtype=float)
+    I = np.eye(D)
+
+    # Define the penalized negative log-likelihood objective.
+    def objective(weights):
+        return logreg_nll(weights, X, y) + lam * (weights @ weights)
+
+    for _ in range(max_iter):
+        # Compute the gradient and Hessian of the penalized objective.
+        g = logreg_grad(w, X, y) + 2.0 * lam * w
+        H = logreg_hessian(w, X) + 2.0 * lam * I
+
+        # Solve the Newton system H @ step = g.
+        step = np.linalg.solve(H, g)
+
+        # Evaluate the current objective before backtracking.
+        current_obj = objective(w)
+
+        # Backtracking line search: halve eta while the objective increases.
+        eta = 1.0
+        while eta > 1e-10 and objective(w - eta * step) > current_obj:
+            eta *= 0.5
+
+        # Apply the accepted Newton update.
+        update = eta * step
+        w = w - update
+
+        # Stop when the maximum absolute weight change is below tolerance.
+        if np.max(np.abs(update)) < tol:
+            break
+
+    return w
+
