@@ -238,3 +238,17 @@ def fit_map_newton(X, y, lam, max_iter=100, tol=1e-10):
 
     return w
 
+# Step 10 - make_ring_data
+def make_ring_data(n, flip_prob, rng):
+    # Draw all feature vectors first, uniformly from [-1, 1]^2.
+    X = rng.uniform(-1.0, 1.0, size=(n, 2))
+
+    # Assign clean labels: 1 inside the circle and 0 outside.
+    y = ((X[:, 0] ** 2 + X[:, 1] ** 2) < 0.5).astype(int)
+
+    # Draw once for all examples, then flip labels where the draw is below flip_prob.
+    flip_mask = rng.random(n) < flip_prob
+    y[flip_mask] = 1 - y[flip_mask]
+
+    return X, y
+
