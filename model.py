@@ -421,3 +421,24 @@ def laplace_posterior(X, y, prior_var):
 
     return w_map, Sigma
 
+# Step 18 - predictive_mc
+def predictive_mc(X_test, w_map, Sigma, n_samples, rng):
+    # Number of features.
+    D = w_map.shape[0]
+
+    # Compute the Cholesky factor of the posterior covariance matrix.
+    L = np.linalg.cholesky(Sigma)
+
+    # Draw all standard-normal samples in exactly one RNG call.
+    Z = rng.standard_normal((n_samples, D))
+
+    # Transform the samples to obtain weights from N(w_map, Sigma).
+    Ws = w_map + Z @ L.T
+
+    # Compute predictions for every test point under every sampled weight vector.
+    # X_test has shape (M, D), and Ws.T has shape (D, n_samples).
+    probabilities = sigmoid(X_test @ Ws.T)
+
+    # Average over posterior samples to obtain the predictive probabilities.
+    return np.mean(probabilities, axis=1)
+
