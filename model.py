@@ -347,3 +347,35 @@ def bohning_bound(X, C):
 
     return B
 
+# Step 15 - fit_softmax_mm
+def fit_softmax_mm(X, y, C, n_iter):
+    # Initialize the free-class weights to zero.
+    D = X.shape[1]
+    W = np.zeros((C - 1, D), dtype=float)
+
+    # Compute the inverse of Böhning's bound once.
+    B_inv = np.linalg.inv(bohning_bound(X, C))
+
+    # Record the initial log-likelihood before the first update.
+    ll, G = softmax_loglik_grad(W, X, y, C)
+    history = [ll]
+
+    for _ in range(n_iter):
+        # Flatten weights and gradient in class-major order.
+        w_flat = W.reshape(-1)
+        g_flat = G.reshape(-1)
+
+        # Apply the Böhning-bound minorize-maximize update.
+        w_flat = w_flat - B_inv @ g_flat
+
+        # Restore the weight matrix shape (C - 1, D).
+        W = w_flat.reshape(C - 1, D)
+
+        # Evaluate the updated log-likelihood and gradient.
+        ll, G = softmax_loglik_grad(W, X, y, C)
+
+        # Record the log-likelihood after this update.
+        history.append(ll)
+
+    return W, np.asarray(history, dtype=float)
+
