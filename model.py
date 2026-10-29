@@ -811,3 +811,26 @@ def bi_tempered_grad(y, A, t1, t2):
     # The loss is averaged over examples.
     return grad / N
 
+# Step 30 - fit_bi_tempered
+def fit_bi_tempered(X, y, C, t1, t2, lr, n_iter):
+    # Number of features, including the bias column if provided.
+    D = X.shape[1]
+
+    # Initialize the weights to zero for all C classes.
+    W = np.zeros((C, D), dtype=float)
+
+    # Train using gradient descent on the mean bi-tempered loss.
+    for _ in range(n_iter):
+        # Compute logits for every example and class.
+        A = X @ W.T
+
+        # Compute the gradient of the loss with respect to the logits.
+        # Shape: (N, C).
+        G = bi_tempered_grad(y, A, t1, t2)
+
+        # Apply the gradient update to the class weight vectors.
+        # G.T @ X has shape (C, D).
+        W -= lr * (G.T @ X)
+
+    return W
+
