@@ -597,3 +597,18 @@ def inject_label_noise(X, y, w_ref, n_flip, mode):
 
     return y_noisy
 
+# Step 23 - mixture_nll
+def mixture_nll(w, pi, X, y):
+    # Compute the logistic model's predicted probabilities.
+    mu = sigmoid(X @ w)
+
+    # Compute the probability assigned by the logistic model to each
+    # observed label: mu for label 1, and 1 - mu for label 0.
+    q = np.where(y == 1, mu, 1.0 - mu)
+
+    # Combine the label-noise process (a fair coin) with the logistic model.
+    p = pi / 2.0 + (1.0 - pi) * q
+
+    # Return the average negative log-likelihood as a Python float.
+    return float(-np.mean(np.log(p)))
+
