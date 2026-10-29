@@ -495,3 +495,72 @@ def calibration_metrics(p, y, n_bins=10):
     # Return both metrics as Python floats.
     return float(nll), float(ece)
 
+# Step 21 - small_data_study
+def small_data_study(
+    n_tasks, n_train, dim, true_var, prior_var, rng,
+    n_test=200, n_samples=1000
+):
+    # Accumulate log loss and ECE for each prediction method.
+    scores = {
+        "plugin": [],
+        "probit": [],
+        "mc": []
+    }
+
+    for _ in range(n_tasks):
+        # 1. Draw the true weight vector.
+        w_true = rng.normal(0.0, np.sqrt(true_var), size=dim)
+
+        # 2. Draw all feature vectors (no bias column).
+        X = rng.normal(size=(n_train + n_test, dim))
+
+        # 3. Generate binary labels using the true logistic model.
+        probabilities = sigmoid(X @ w_true)
+        y = (rng.random(n_train + n_test) < probabilities).astype(int)
+
+        # 4. Split the first n_train observations for training.
+        X_train = X[:n_train]
+        y_train = y[:n_train]
+        X_test = X[n_train:]
+        y_test = y[n_train:]
+
+        # 5. Fit the Laplace approximation to the posterior.
+        w_map, Sigma = laplace_posterior(
+            X_train, y_train, prior_var
+        )
+
+        # 6. Compute predictions in the required order.
+        # Plug-in prediction uses only the MAP estimate.
+        p_plugin = sigmoid(X_test @ w_map)
+
+        # Probit prediction accounts approximately for posterior uncertainty.
+        p_probit = predictive_probit(X_test, w_map, Sigma)
+
+        # Monte Carlo prediction averages over sampled posterior weights.
+        p_mc = predictive_mc(
+            X_test, w_map, Sigma, n_samples, rng
+        )
+
+        # 7. Score each method and accumulate its metrics.
+        scores["plugin"].append(
+            calibration_metrics(p_plugin, y_test)
+        )
+        scores["probit"].append(
+            calibration_metrics(p_probit, y_test)
+        )
+        scores["mc"].append(
+            calibration_metrics(p_mc, y_test)
+        )
+
+    # Average (NLL, ECE) across tasks and return Python-float tuples.
+    results = {}
+
+    for method, task_scores in scores.items():
+        mean_scores = np.mean(np.asarray(task_scores, dtype=float), axis=0)
+        results[method] = (
+            float(mean_scores[0]),
+            float(mean_scores[1])
+        )
+
+    return results
+
