@@ -718,3 +718,45 @@ def exp_t(x, t):
 
     return result
 
+# Step 27 - tempered_softmax
+def tempered_softmax(A, t, n_iter=100, tol=1e-12):
+    # Ensure the input is a 2-D floating-point array.
+    # A 1-D input is treated as a single row.
+    A = np.atleast_2d(np.asarray(A, dtype=float))
+
+    # For t = 1, compute the ordinary numerically stable softmax.
+    if t == 1.0:
+        shifted = A - np.max(A, axis=1, keepdims=True)
+        exp_A = np.exp(shifted)
+        return exp_A / np.sum(exp_A, axis=1, keepdims=True)
+
+    # Shift each row by its maximum for numerical stability.
+    mu = np.max(A, axis=1, keepdims=True)
+    a0 = A - mu
+
+    # Initialize the fixed-point iteration.
+    a_prime = a0.copy()
+
+    for _ in range(n_iter):
+        # Sum the tempered exponentials for each row.
+        z = np.sum(exp_t(a_prime, t), axis=1, keepdims=True)
+
+        # Update the shifted logits using Algorithm 10.2.
+        a_new = np.power(z, 1.0 - t) * a0
+
+        # Keep the latest update and stop when the maximum change is small.
+        converged = np.max(np.abs(a_new - a_prime)) < tol
+        a_prime = a_new
+
+        if converged:
+            break
+
+    # Recompute the normalization constant using the final iterate.
+    z = np.sum(exp_t(a_prime, t), axis=1, keepdims=True)
+
+    # Recover the row-wise normalization offset.
+    lam = -log_t(1.0 / z, t) + mu
+
+    # Return the normalized tempered probabilities.
+    return exp_t(A - lam, t)
+
