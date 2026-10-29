@@ -330,3 +330,20 @@ def softmax_loglik_grad(W, X, y, C):
 
     return float(ll), G
 
+# Step 14 - bohning_bound
+def bohning_bound(X, C):
+    # Number of free classes (the last class is the reference class).
+    K = C - 1
+
+    # Construct I - 11^T / C for the free classes.
+    class_matrix = np.eye(K) - np.ones((K, K)) / C
+
+    # Compute X^T X.
+    feature_matrix = X.T @ X
+
+    # Construct Bohning's constant lower bound using the Kronecker product.
+    # Class-major ordering matches W.reshape(-1) for W of shape (C - 1, D).
+    B = -0.5 * np.kron(class_matrix, feature_matrix)
+
+    return B
+
