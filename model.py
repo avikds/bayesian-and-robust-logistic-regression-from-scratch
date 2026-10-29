@@ -760,3 +760,25 @@ def tempered_softmax(A, t, n_iter=100, tol=1e-12):
     # Return the normalized tempered probabilities.
     return exp_t(A - lam, t)
 
+# Step 28 - bi_tempered_loss
+def bi_tempered_loss(y, A, t1, t2):
+    # Compute the tempered softmax probabilities using temperature t2.
+    P = tempered_softmax(A, t2)
+
+    # Select the probability assigned to the true class for each example.
+    n = np.arange(len(y))
+    true_class_probs = P[n, y]
+
+    # Compute the tempered cross-entropy term.
+    loss_log = -log_t(true_class_probs, t1)
+
+    # Compute the correction term across all classes for each example.
+    correction = (
+        1.0 - np.sum(P ** (2.0 - t1), axis=1)
+    ) / (2.0 - t1)
+
+    # Average the bi-tempered loss over all examples.
+    loss = loss_log - correction
+
+    return float(np.mean(loss))
+
