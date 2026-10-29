@@ -782,3 +782,32 @@ def bi_tempered_loss(y, A, t1, t2):
 
     return float(np.mean(loss))
 
+# Step 29 - bi_tempered_grad
+def bi_tempered_grad(y, A, t1, t2):
+    # Compute tempered softmax probabilities.
+    P = tempered_softmax(A, t2)
+
+    # Number of examples.
+    N = len(y)
+
+    # Compute the first term P_j^(1 - t1 + t2) for every class.
+    v = P ** (1.0 - t1 + t2)
+
+    # For each example, subtract P_c^(t2 - t1) at the true-class index.
+    # This combines the label-dependent terms without separately
+    # evaluating P_c^(-t1).
+    rows = np.arange(N)
+    true_probs = P[rows, y]
+    v[rows, y] -= true_probs ** (t2 - t1)
+
+    # Compute the normalized tempered-softmax Jacobian factors.
+    P_t2 = P ** t2
+    q = P_t2 / np.sum(P_t2, axis=1, keepdims=True)
+
+    # Apply the Jacobian-vector product for each example.
+    v_sum = np.sum(v, axis=1, keepdims=True)
+    grad = v - q * v_sum
+
+    # The loss is averaged over examples.
+    return grad / N
+
