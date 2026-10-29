@@ -58,3 +58,23 @@ def logreg_grad(w, X, y):
 
     return grad
 
+# Step 4 - logreg_hessian
+def logreg_hessian(w, X):
+    # Compute the logits for all examples.
+    logits = X @ w
+
+    # Compute predicted probabilities using the sigmoid function from Step 1.
+    mu = sigmoid(logits)
+
+    # Compute the diagonal weights: mu_i * (1 - mu_i).
+    weights = mu * (1.0 - mu)
+
+    # Scale the columns of X.T by the corresponding weights.
+    # This avoids constructing an N x N diagonal matrix.
+    weighted_X_T = X.T * weights
+
+    # Compute the Hessian of the average negative log-likelihood.
+    hessian = (weighted_X_T @ X) / X.shape[0]
+
+    return hessian
+
