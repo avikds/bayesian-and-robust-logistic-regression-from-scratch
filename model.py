@@ -33,12 +33,12 @@ def sigmoid(a):
 
 # Step 2 - logreg_nll
 def logreg_nll(w, X, y):
-    # Compute the logits for all examples.
+    # Compute the logits: a = X @ w.
     a = X @ w
 
-    # Compute binary cross-entropy directly from logits.
-    # np.logaddexp(0.0, a) evaluates log(1 + exp(a))
-    # stably, avoiding overflow for extreme logits.
+    # Compute the binary logistic regression NLL using the
+    # numerically stable softplus: log(1 + exp(a)) - y * a.
+    # np.logaddexp(0, a) avoids overflow for large positive logits.
     nll = np.logaddexp(0.0, a) - y * a
 
     # Return the average negative log-likelihood as a Python float.
