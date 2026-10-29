@@ -612,3 +612,21 @@ def mixture_nll(w, pi, X, y):
     # Return the average negative log-likelihood as a Python float.
     return float(-np.mean(np.log(p)))
 
+# Step 24 - clean_responsibility
+def clean_responsibility(w, pi, X, y):
+    # Compute the logistic model's predicted probability for class 1.
+    mu = sigmoid(X @ w)
+
+    # Compute the probability the model assigns to each observed label.
+    # For y = 1, use mu; for y = 0, use 1 - mu.
+    q = np.where(y == 1, mu, 1.0 - mu)
+
+    # Compute the total mixture probability of each observed label.
+    p = pi / 2.0 + (1.0 - pi) * q
+
+    # Compute the posterior probability that each label came from
+    # the logistic model rather than the noise process.
+    r = (1.0 - pi) * q / p
+
+    return r
+
