@@ -680,3 +680,41 @@ def fit_robust_logreg(X, y, lam, n_iter=100, pi0=0.1, n_newton=3):
     # Return final weights, noise probability, and history.
     return w, pi, np.asarray(history, dtype=float)
 
+# Step 26 - log_t
+def log_t(x, t):
+    # Convert input to a floating-point NumPy array.
+    x = np.asarray(x, dtype=float)
+
+    # Use the standard logarithm when t is exactly 1.
+    if t == 1.0:
+        return np.log(x)
+
+    # Compute the tempered logarithm elementwise.
+    return (np.power(x, 1.0 - t) - 1.0) / (1.0 - t)
+
+
+def exp_t(x, t):
+    # Convert input to a floating-point NumPy array.
+    x = np.asarray(x, dtype=float)
+
+    # Use the standard exponential when t is exactly 1.
+    if t == 1.0:
+        return np.exp(x)
+
+    # Compute the base of the tempered exponential.
+    base = 1.0 + (1.0 - t) * x
+
+    # The tempered exponential is zero when the base is non-positive.
+    # Replacing invalid bases before exponentiation also avoids
+    # zero raised to a negative power when t > 1.
+    positive = base > 0.0
+    safe_base = np.where(positive, base, 1.0)
+
+    result = np.where(
+        positive,
+        np.power(safe_base, 1.0 / (1.0 - t)),
+        0.0
+    )
+
+    return result
+
