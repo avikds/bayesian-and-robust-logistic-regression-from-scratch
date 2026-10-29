@@ -564,3 +564,36 @@ def small_data_study(
 
     return results
 
+# Step 22 - inject_label_noise
+def inject_label_noise(X, y, w_ref, n_flip, mode):
+    # Compute the signed margins relative to the reference weight vector.
+    margins = X @ w_ref
+
+    # Copy labels so the original y array is never modified.
+    y_noisy = np.array(y, copy=True)
+
+    if mode == "near":
+        # Select the n_flip examples closest to the decision boundary,
+        # regardless of their class. Stable sorting breaks ties by index.
+        indices = np.argsort(np.abs(margins), kind="stable")[:n_flip]
+
+    elif mode == "far":
+        # Consider only class-0 examples.
+        class0_indices = np.flatnonzero(y == 0)
+
+        # Sort their margins in ascending order, so the most negative
+        # margins (farthest into class 0) come first.
+        sorted_positions = np.argsort(
+            margins[class0_indices], kind="stable"
+        )
+        indices = class0_indices[sorted_positions[:n_flip]]
+
+    else:
+        # Reject unsupported modes.
+        raise ValueError("mode must be 'near' or 'far'")
+
+    # Flip the selected labels: 0 becomes 1 and 1 becomes 0.
+    y_noisy[indices] = 1 - y_noisy[indices]
+
+    return y_noisy
+
